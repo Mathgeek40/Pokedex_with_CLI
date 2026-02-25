@@ -1,5 +1,10 @@
 import time, io, os 
 
+def cap(string): #Capitalises any proper nouns, to keep the formatting consistent no matter the input
+    if string != "":
+        string = string[0].upper + string[1:].lower
+    return string
+
 def find(name): #Simple linear search which returns the position, or -1 if it is not contained within the array
     global names
     if name in names: 
@@ -49,9 +54,6 @@ def search(array, type, parameter): #Narrows down an array based on specific par
     #No case _: is required because this variable is assigned by the program itself, so there cannot be errors.      
     return result
 
-
-
-
 def display_entry(name): #Shows the Pokédex entry of a specific Pokémon
     global names, entries 
     position = find(name) #Finds the position of the Pokémon
@@ -82,14 +84,14 @@ def display_entry(name): #Shows the Pokédex entry of a specific Pokémon
         time.sleep(0.1) 
         print(f"Move {x+1}'s damage: {cur[x+1]}")
         time.sleep(0.1) 
-
         if cur[x+2] != "":
             print(f"Move {x+1}'s additional information: {cur[x+2]}")
             time.sleep(0.1) 
 
 def add_new(): 
     global names, entries
-    name = input("What is the name of the Pokémon: ") #Gathering data
+    name = input("What is the name of the Pokémon: ") #Gathering data 
+    name = cap(name)
     time.sleep(0.1)   
     names.append(name) 
     cur = [] 
@@ -99,23 +101,28 @@ def add_new():
     time.sleep(0.1)  
     cur.append(input(f"What is {name}'s health: "))
     time.sleep(0.1)   
-    cur.append(input(f"What is {name}'s primary type: "))
+    cur.append(cap(input(f"What is {name}'s primary type: ")))
     time.sleep(0.1)   
-    cur.append(input(f"What is {name}'s secondary type (Press enter if not applicable):"))
+    cur.append(cap(input(f"What is {name}'s secondary type (Press enter if not applicable):")))
     time.sleep(0.1) 
     ans = input(f"Does {name} have any evolutions (higher or lower)? (y/n): ").lower()
     cur.append(6) 
     x = 0 
     while ans == "y": #While the Pokémon still has moves left
         evo = input(f"What is the name of {name}'s evolution?: ") 
-        cur.append(evo)
+        cur.append(cap(evo))
         ans = input(f"Does {name} have any more evolutions? (y/n): ").lower() 
         x += 1
-    cur[5] += x   
+    cur[5] += x
+    for x in range(len(names)): #This loop ensures that the evolutions are consistent e.g. if you add a Pokémon which evolves into Gardevoir, Gardevoir's entry will always contain this Pokémon under evolutions. 
+        if names[x] in cur[6:cur[5]]:
+            if cur[0] not in entries[x][6:entries[x][5]]:
+                entries[x] = entries[x][:entries[x][5]] + cur[0] + entries[[x][5] + 1:]
+                entries[x][5] += 1  
     ans = input(f"Would you like to add any moves for {name}? (y/n):") 
     ans = ans.lower()   
     while ans != "n": 
-        cur.append(input(f"What is {name}'s next move: ")) 
+        cur.append(cap(input(f"What is {name}'s next move: "))) 
         cur.append(input(f"What is the damage of this move: ")) 
         cur.append(input(f"Any additional information: ")) 
         ans = input(f"Would you like to add any moves for {name}? (y/n):") 
@@ -155,25 +162,25 @@ def edit_entry(name):
         print("7. Evolutions")
         time.sleep(0.1)  
         print("8. Moves") 
-        ans = int(input()) 
+        ans = input()
         match ans:  
-            case 1:  
+            case "1":  
                 names[pos] = input("What would you like to change {name}'s name to: ")
-            case 2: 
+            case "2": 
                 entries[pos][2] = input("What would you like to change {name}'s health to: ") 
-            case 3: 
+            case "3": 
                 entries[pos][0] = input("What would you like to change {name}'s Pokédex no. to: ") 
-            case 4:   
+            case "4":   
                 entries[pos][1] = input("What would you like to change {name}'s Pokédex entry to: ")
-            case 5: 
+            case "5": 
                 entries[pos][3] = input("What would you like to change {name}'s primary type to: ")
-            case 6: 
+            case "6": 
                 entries[pos][4] = input("What would you like to change {name}'s secondary type to: ")
-            case 7: 
+            case "7": 
                 no = int(input(f"Which of {name}'s evolutions would you like to change (give a number): ")) 
                 no += 5 
                 entries[pos][no] = input("What would you like to change the evolution's name to?: ") 
-            case 8: 
+            case "8": 
                 move = True
             case _: 
                 print("Sorry, that didn't work. Please try again") 
@@ -182,20 +189,20 @@ def edit_entry(name):
             num -= 1 
             num1 = entries[pos][5] + (3 * num)
         while move: #Until the user is done entering 
-            print("Would you like to change the move's") 
+            print("Would you like to change the move's") #Secondary menu
             print("1. Name") 
             print("2. Damage")
             print("3. Type")
             print("4. Additional information") 
-            ans = int(input()) 
+            ans = input() 
             match ans: 
-                case 1: 
+                case "1": 
                     entries[num1] = input("What would you like the new name to be: ") 
-                case 2: 
+                case "2": 
                     entries[num1+1] = input("What would you like the new damage to be: ") 
-                case 3:
+                case "3":
                     entries[num1+3] = input("What would you like the new type to be: ")
-                case 4: 
+                case "4": 
                     entries[num1+2] = input("What would you like the new additional information to be: ")
                 case _: 
                     print("Sorry, that didn't work")  
@@ -210,16 +217,17 @@ def edit_entry(name):
 
 def search_for_pokemon():
     global entries, names  
-    array = entries
-    for x in range(len(array)):
+    array = entries #Array of all the results
+    for x in range(len(array)): #Consolidates the names with the entries
         array[x].append(names[x])
     ans = input("Do you know the name of this Pokémon? (y/n): ").lower() 
-    if ans == "y":
+    if ans == "y": 
         name = input("What is the Pokémon's name?: ")
         display_entry(name) 
     else: 
         ans = "y"
-        while ans == "y":
+        while ans == "y": #Until the user is done entering attributes
+            ans = "y" 
             parameter = ""
             print("What attributes do you know?: ")
             print("1. Approximate health") 
@@ -227,21 +235,21 @@ def search_for_pokemon():
             print("3. Either type of the Pokémon")
             print("4. Moves") 
             print("5. Search")
-            inp = int(input()) 
-            match inp:
-                case 1:
+            ans = input() 
+            match ans:
+                case "1":
                     parameter = int(input("What is the approximate health?: "))
                     type = "health" 
-                case 2:
+                case "2":
                     parameter = input("What is the evolution's name?: ")
                     type = "evolution" 
-                case 3:
+                case "3":
                     parameter = input("What is the type that you know?: ") 
                     type = "type"
-                case 4: 
+                case "4": 
                     parameter = input("What is the move's name?: ")
                     type = "move"
-                case 5:
+                case "5":
                     array = [array[x][len(array[x])] for x in range(len(array))] 
                     num = input(f"How many results would you like (up to {len(array)}): ") 
                     num -= 1 
@@ -251,10 +259,8 @@ def search_for_pokemon():
                     print("Sorry, that didn't work. Could you please try again") 
             if type != "":
                 array = search(array, type, parameter)
-
-
  
-def load_file():
+def load_file(): #Loads the data from a specific file
     global names, entries
     bool = True
     while bool:
@@ -263,9 +269,10 @@ def load_file():
             bool = False
             if os.path.exists(file):
                 try: 
-                    f = open(file, "r") 
+                    f = open(file, "r") #Opens file for read
                     temp = f.read()
-                    lines = temp.split("\n")
+                    lines = temp.split("\n") #Breaks the file into lines (entries)
+                    f.close() #Closes the file
                 except:
                     print("Sorry, that file cannot be written to. Could you enter another filename?")
                     bool = True
@@ -274,7 +281,7 @@ def load_file():
         else: 
             print("Sorry, that file is not in the .txt format. Could you enter another filename?")
 
-def save_file():
+def save_file(): #Copies the data to a specific file
     bool = True
     save = []
     for x in range(len(names)): #This function formats the data 
@@ -305,20 +312,20 @@ def save_file():
 
 def file_handling():
     bool = False 
-    while not bool:
+    while not bool: #Until a valid input has been given
         print("What would you like to do: ") #Secondary menu
         print("1. Load Pokédex from file") 
         print("2. Save current Pokédex to file")
         print("3. Cancel") 
-        ans = int(input())
-        match ans: 
-            case 1:
+        ans = str(input())
+        match ans: #Case statement for handling the input
+            case "1":
                 load_file() 
                 bool = True 
-            case 2:
+            case "2":
                 save_file()
                 bool = True
-            case 3: 
+            case "3": 
                 bool = True 
             case _: 
                 print("Sorry, that didn't work. Could you please try again?")
@@ -343,18 +350,18 @@ while not quit:
     time.sleep(0.1) 
     print("5. Quit") 
     
-    ans = int(input()) 
+    ans = input() 
     
-    match ans: #Match case
-        case 1: 
+    match ans: #Case statement for the input
+        case "1": 
             add_new() 
-        case 2: 
+        case "2": 
             edit_entry("") 
-        case 3: 
+        case "3": 
             search_for_pokemon() 
-        case 4:
+        case "4":
             file_handling() 
-        case 5:
+        case "5":
             print("Bye bye 👋") 
             quit = True 
         case _: #This handles any other inputs. 
